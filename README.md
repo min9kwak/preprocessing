@@ -23,7 +23,7 @@ To use this package safely, ensure you have the following:
 * Python 3.10+ environment
 * Docker
 * Linux
-  * According to the original developers, Windows and Mac OS will be supported in future versions
+  * According to the original developers, Windows and macOS will be supported in future versions
 * CUDA (optional, but recommended)
 
 With a Python 3.10+ environment you can install directly from [pypi.org](https://pypi.org/project/brainles-preprocessing/):
@@ -57,7 +57,7 @@ Correspondingly, the ROI and biopsy undergo an identical transformation as the M
 ### 2. ANTs.py
 The `ANTs.py` file provides the `ModifiedANTsRegistrator` class, which extends the functionality of the 
 existing `ANTsRegistrator` to effectively handle ROI transformations. 
-When transforming the ROI or biopsy, any values greater than **args.threshold** are converted to **1** to maintain the ROI or biopsy as a binary mask. 
+When transforming the ROI or biopsy, any values greater than **threshold** are converted to **1** to maintain the ROI or biopsy as a binary mask. 
 This step is crucial because, without it, the affine transformation process could result in blurred edges of the 
 final ROI or biopsy. By ensuring values remain binary, the integrity of the ROI or biopsy is preserved.
 
@@ -120,7 +120,7 @@ Note that the file extensions and names should follow the provided format.
 Please have a look at the original [Jupyter Notebook tutorials](https://github.com/BrainLesion/tutorials/tree/main/preprocessing) illustrating the usage of BrainLes preprocessing.
 The modified version is implemented as [run_preprocessing.py](#4-run_preprocessingpy). To perform preprocessing, run the following command:
 ```
-python run_preprocessing.py
+python run_preprocessing.py --data_dir your_data_dir
 ```
 
 ## Results
