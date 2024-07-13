@@ -589,6 +589,7 @@ class ModifiedPreprocessor:
                     )
 
         logger.info(f"{' Preprocessing complete ':=^80}")
+        shutil.rmtree(self.temp_folder, ignore_errors=True)
 
     def _save_output(
         self,
