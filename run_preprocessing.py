@@ -187,6 +187,8 @@ def main():
 
 
 if __name__ == "__main__":
+    import sys
+
     try:
         main()
     except KeyboardInterrupt:
