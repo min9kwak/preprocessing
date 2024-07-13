@@ -110,7 +110,7 @@ class ModifiedANTsRegistrator(Registrator):
         transformed_image_path: str,
         matrix_path: str,
         log_file_path: str,
-        is_roi: bool = False,
+        is_binary: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -122,7 +122,7 @@ class ModifiedANTsRegistrator(Registrator):
             transformed_image_path (str): Path to the transformed image (output).
             matrix_path (str): Path to the transformation matrix.
             log_file_path (str): Path to the log file.
-            is_roi (bool): Whether to apply a ROI.
+            is_binary (bool): Whether to apply a ROI or Biopsy.
             **kwargs: Additional transformation parameters to update the instantiated defaults.
         """
         start_time = datetime.datetime.now()
@@ -144,7 +144,7 @@ class ModifiedANTsRegistrator(Registrator):
             **transform_kwargs,
         )
 
-        if is_roi:
+        if is_binary:
             transformed_image = ants.threshold_image(transformed_image,
                                                      low_thresh=self.threshold, high_thresh=1.0,
                                                      inval=1.0, outval=0.0)

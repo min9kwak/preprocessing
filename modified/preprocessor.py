@@ -234,14 +234,46 @@ class ModifiedPreprocessor:
             logger.info(
                 f"Registering modality {moving_modality.modality_name} (file={file_name}) to center modality..."
             )
-            moving_modality.register(
+
+            transformation_matrix = moving_modality.register(
                 registrator=self.registrator,
                 fixed_image_path=self.center_modality.current_image,
                 registration_dir=coregistration_dir,
                 moving_image_name=file_name,
             )
 
+            # moving ROI
+            if moving_modality.roi_name is not None:
+                moving_binary_name = f"co__{self.center_modality.modality_name}__{moving_modality.roi_name}"
+                logger.info(
+                    f"Transforming ROI {moving_modality.roi_name} (file={moving_modality.roi_name}) to co-registered space..."
+                )
+                moving_modality.transform_binary(
+                    registrator=self.registrator,
+                    fixed_image_path=moving_modality.current_image,
+                    registration_dir_path=coregistration_dir,
+                    moving_binary_name=moving_binary_name,
+                    transformation_matrix_path=transformation_matrix,
+                    binary_type='roi'
+                )
+
+            # moving biopsy
+            if moving_modality.biopsy_name is not None:
+                moving_binary_name = f"co__{self.center_modality.modality_name}__{moving_modality.biopsy_name}"
+                logger.info(
+                    f"Transforming biopsy {moving_modality.biopsy_name} (file={moving_modality.biopsy_name}) to co-registered space..."
+                )
+                moving_modality.transform_binary(
+                    registrator=self.registrator,
+                    fixed_image_path=moving_modality.current_image,
+                    registration_dir_path=coregistration_dir,
+                    moving_binary_name=moving_binary_name,
+                    transformation_matrix_path=transformation_matrix,
+                    binary_type='biopsy'
+                )
+
         # center_modality remains as-is
+        # image
         shutil.copyfile(
             src=self.center_modality.image_path,
             dst=os.path.join(
@@ -249,6 +281,24 @@ class ModifiedPreprocessor:
                 f"atlas__{self.center_modality.modality_name}.nii.gz",
             ),
         )
+        # roi
+        if self.center_modality.roi_name is not None:
+            shutil.copyfile(
+                src=self.center_modality.roi_path,
+                dst=os.path.join(
+                    coregistration_dir,
+                    f"atlas__{self.center_modality.roi_name}.nii.gz",
+                ),
+            )
+        # biopsy
+        if self.center_modality.biopsy_name is not None:
+            shutil.copyfile(
+                src=self.center_modality.biopsy_path,
+                dst=os.path.join(
+                    coregistration_dir,
+                    f"atlas__{self.center_modality.biopsy_name}.nii.gz",
+                ),
+            )
 
         # from temporary folder to coregistration folder under the data dir
         self._save_output(
@@ -272,18 +322,32 @@ class ModifiedPreprocessor:
         )
         logger.info(f"Atlas registration complete. Output saved to {self.atlas_dir}")
 
-        # Transform center ROI to atlas
+        # Transform center ROI and biopsy to atlas
         if self.center_modality.roi_name is not None:
-            moving_roi_name = f"atlas__{self.center_modality.roi_name}"
+            moving_binary_name = f"atlas__{self.center_modality.roi_name}"
             logger.info(
-                f"Transforming ROI {self.center_modality.roi_name} (file={moving_roi_name}) to atlas space..."
+                f"Transforming ROI {self.center_modality.roi_name} (file={moving_binary_name}) to atlas space..."
             )
-            self.center_modality.transform_roi(
+            self.center_modality.transform_binary(
                 registrator=self.registrator,
-                fixed_image_path=self.atlas_image_path,
+                fixed_image_path=self.center_modality.current_image,
                 registration_dir_path=self.atlas_dir,
-                moving_roi_name=moving_roi_name,
+                moving_binary_name=moving_binary_name,
                 transformation_matrix_path=transformation_matrix,
+                binary_type='roi'
+            )
+        if self.center_modality.biopsy_name is not None:
+            moving_binary_name = f"atlas__{self.center_modality.biopsy_name}"
+            logger.info(
+                f"Transforming ROI {self.center_modality.biopsy_name} (file={moving_binary_name}) to atlas space..."
+            )
+            self.center_modality.transform_binary(
+                registrator=self.registrator,
+                fixed_image_path=self.center_modality.current_image,
+                registration_dir_path=self.atlas_dir,
+                moving_binary_name=moving_binary_name,
+                transformation_matrix_path=transformation_matrix,
+                binary_type='biopsy'
             )
 
         # Transform moving modalities to atlas
@@ -297,23 +361,37 @@ class ModifiedPreprocessor:
             )
             moving_modality.transform(
                 registrator=self.registrator,
-                fixed_image_path=self.atlas_image_path,
+                fixed_image_path=self.center_modality.current_image,
                 registration_dir_path=self.atlas_dir,
                 moving_image_name=moving_file_name,
                 transformation_matrix_path=transformation_matrix,
             )
 
             if moving_modality.roi_name is not None:
-                moving_roi_name = f"atlas__{moving_modality.roi_name}"
+                moving_binary_name = f"atlas__{moving_modality.roi_name}"
                 logger.info(
-                    f"Transforming ROI {moving_modality.roi_name} (file={moving_roi_name}) to atlas space..."
+                    f"Transforming ROI {moving_modality.roi_name} (file={moving_binary_name}) to atlas space..."
                 )
-                moving_modality.transform_roi(
+                moving_modality.transform_binary(
                     registrator=self.registrator,
-                    fixed_image_path=self.atlas_image_path,
+                    fixed_image_path=moving_modality.current_image,
                     registration_dir_path=self.atlas_dir,
-                    moving_roi_name=moving_roi_name,
+                    moving_binary_name=moving_binary_name,
                     transformation_matrix_path=transformation_matrix,
+                    binary_type='roi'
+                )
+            if moving_modality.biopsy_name is not None:
+                moving_binary_name = f"atlas__{moving_modality.biopsy_name}"
+                logger.info(
+                    f"Transforming biopsy {moving_modality.biopsy_name} (file={moving_binary_name}) to atlas space..."
+                )
+                moving_modality.transform_binary(
+                    registrator=self.registrator,
+                    fixed_image_path=moving_modality.current_image,
+                    registration_dir_path=self.atlas_dir,
+                    moving_binary_name=moving_binary_name,
+                    transformation_matrix_path=transformation_matrix,
+                    binary_type='biopsy'
                 )
 
         self._save_output(
@@ -348,14 +426,29 @@ class ModifiedPreprocessor:
                     logger.info(
                         f"Applying optional atlas correction for modality {moving_modality.roi_name}"
                     )
-                    moving_roi_name = f"atlas_corrected__{self.center_modality.modality_name}__{moving_modality.roi_name}"
+                    moving_binary_name = f"atlas_corrected__{self.center_modality.modality_name}__{moving_modality.roi_name}"
 
-                    moving_modality.transform_roi(
+                    moving_modality.transform_binary(
                         registrator=self.registrator,
-                        fixed_image_path=self.center_modality.current_image,
+                        fixed_image_path=moving_modality.current_image,
                         registration_dir_path=atlas_correction_dir,
-                        moving_roi_name=moving_roi_name,
+                        moving_binary_name=moving_binary_name,
                         transformation_matrix_path=transformation_matrix,
+                        binary_type='roi'
+                    )
+                if moving_modality.biopsy_name is not None:
+                    logger.info(
+                        f"Applying optional atlas correction for modality {moving_modality.biopsy_name}"
+                    )
+                    moving_binary_name = f"atlas_corrected__{self.center_modality.modality_name}__{moving_modality.biopsy_name}"
+
+                    moving_modality.transform_binary(
+                        registrator=self.registrator,
+                        fixed_image_path=moving_modality.current_image,
+                        registration_dir_path=atlas_correction_dir,
+                        moving_binary_name=moving_binary_name,
+                        transformation_matrix_path=transformation_matrix,
+                        binary_type='biopsy'
                     )
 
             else:
@@ -386,6 +479,17 @@ class ModifiedPreprocessor:
                 )
                 logger.info(
                     f"Atlas correction for ROI complete. Output saved to {save_dir_atlas_correction}"
+                )
+            if self.center_modality.biopsy_name is not None:
+                shutil.copyfile(
+                    src=self.center_modality.current_biopsy,
+                    dst=os.path.join(
+                        atlas_correction_dir,
+                        f"atlas_corrected__{self.center_modality.biopsy_name}.nii.gz",
+                    ),
+                )
+                logger.info(
+                    f"Atlas correction for biopsy complete. Output saved to {save_dir_atlas_correction}"
                 )
 
         self._save_output(
@@ -451,7 +555,7 @@ class ModifiedPreprocessor:
                 )
                 # ROI does not need skullstripping and brain extraction
                 if modality.roi_name is not None:
-                    modality.save_current_roi(
+                    modality.save_current_binary(
                         modality.raw_bet_output_path_roi,
                         normalization=False,
                     )
@@ -462,7 +566,7 @@ class ModifiedPreprocessor:
                 )
                 # ROI does not need skullstripping and brain extraction
                 if modality.roi_name is not None:
-                    modality.save_current_roi(
+                    modality.save_current_binary(
                         modality.normalized_bet_output_path_roi,
                         normalization=True,
                     )

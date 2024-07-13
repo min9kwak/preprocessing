@@ -43,6 +43,7 @@ class ModifiedModalitiy:
         modality_name: str,
         image_path: str, # center or moving file
         roi_path: Optional[str] = None, # roi file, can be None
+        biopsy_path: Optional[str] = None,
         raw_bet_output_path: Optional[str] = None,
         raw_bet_output_path_roi: Optional[str] = None,
         raw_skull_output_path: Optional[str] = None,
@@ -58,18 +59,15 @@ class ModifiedModalitiy:
         self.modality_name = modality_name
 
         self.image_path = turbopath(image_path)
-        if roi_path is not None:
-            self.roi_path = turbopath(roi_path)
-        else:
-            self.roi_path = None
+        self.roi_path = turbopath(roi_path) if roi_path is not None else None
+        self.biopsy_path = turbopath(biopsy_path) if biopsy_path is not None else None
 
-        if self.roi_path is not None:
-            self.roi_name = f'{self.modality_name}_roi'
-        else:
-            self.roi_name = None
+        self.roi_name = f'{self.modality_name}_roi' if self.roi_path is not None else None
+        self.biopsy_name = f'{self.modality_name}_biopsy' if self.biopsy_path is not None else None
 
         self.current_image = self.image_path
         self.current_roi = self.roi_path
+        self.current_biopsy = self.biopsy_path
 
         self.normalizer = normalizer
         self.atlas_correction = atlas_correction
@@ -121,10 +119,6 @@ class ModifiedModalitiy:
         else:
             self.normalized_skull_output_path = normalized_skull_output_path
             self.normalized_skull_output_path_roi = normalized_skull_output_path_roi
-
-        # print("self.raw_bet_output_path", self.raw_bet_output_path)
-        # print("self.normalized_skull_output_path", self.normalized_skull_output_path)
-        # print("self.bet:", self.bet)
 
     @property
     def bet(self) -> bool:
@@ -274,13 +268,14 @@ class ModifiedModalitiy:
         )
         self.current_image = transformed
 
-    def transform_roi(
+    def transform_binary(
             self,
             registrator: Registrator,
             fixed_image_path: str,
             registration_dir_path: str,
-            moving_roi_name: str,
+            moving_binary_name: str,
             transformation_matrix_path: str,
+            binary_type: str
     ) -> None:
         """
         Transform the current modality using the specified registrator and transformation matrix.
@@ -289,26 +284,43 @@ class ModifiedModalitiy:
             registrator (Registrator): The registrator object.
             fixed_image_path (str): Path to the fixed image.
             registration_dir_path (str): Directory to store transformation results.
-            moving_roi_name (str): Name of the moving image.
+            moving_binary_name (str): Name of the moving image.
             transformation_matrix_path (str): Path to the transformation matrix.
+            binary_type (str): Type of the binary mask: roi or biopsy
 
         Returns:
             None
         """
-        transformed = os.path.join(registration_dir_path, f"{moving_roi_name}.nii.gz")
+
+        assert binary_type in ["roi", "biopsy"]
+
+        transformed = os.path.join(registration_dir_path, f"{moving_binary_name}.nii.gz")
         transformed_log = os.path.join(
-            registration_dir_path, f"{moving_roi_name}.log"
+            registration_dir_path, f"{moving_binary_name}.log"
         )
 
-        registrator.transform(
-            fixed_image_path=fixed_image_path,
-            moving_image_path=self.current_roi,
-            transformed_image_path=transformed,
-            matrix_path=transformation_matrix_path,
-            log_file_path=transformed_log,
-            is_roi=True,
-        )
-        self.current_roi = transformed
+        if binary_type == "roi":
+            registrator.transform(
+                fixed_image_path=fixed_image_path,
+                moving_image_path=self.current_roi,
+                transformed_image_path=transformed,
+                matrix_path=transformation_matrix_path,
+                log_file_path=transformed_log,
+                is_binary=True, # currently implemented for ANTs registrator only
+            )
+            self.current_roi = transformed
+        elif binary_type == "biopsy":
+            registrator.transform(
+                fixed_image_path=fixed_image_path,
+                moving_image_path=self.current_biopsy,
+                transformed_image_path=transformed,
+                matrix_path=transformation_matrix_path,
+                log_file_path=transformed_log,
+                is_binary=True,  # currently implemented for ANTs registrator only
+            )
+            self.current_biopsy = transformed
+        else:
+            raise ValueError(f"binary_type {binary_type} not supported")
 
     def extract_brain_region(
         self,
@@ -365,24 +377,33 @@ class ModifiedModalitiy:
                 reference_nifti_path=self.current_image,
             )
 
-    def save_current_roi(
+    def save_current_binary(
         self,
         output_path: str,
         normalization=False,
+        binary_type: str = "roi",
     ) -> None:
+
+        assert binary_type in ["roi", "biopsy"]
         os.makedirs(output_path.parent, exist_ok=True)
+        if binary_type == "roi":
+            current_file = self.current_roi
+        elif binary_type == "biopsy":
+            current_file = self.current_biopsy
+        else:
+            raise ValueError
 
         if normalization is False:
             shutil.copyfile(
-                self.current_roi,
+                current_file,
                 output_path,
             )
         elif normalization is True:
-            image = read_nifti(self.current_roi)
-            print("current image", self.current_roi)
+            image = read_nifti(current_file)
+            print("current image", current_file)
             # normalized_image = self.normalizer.normalize(image=image)
             write_nifti(
                 input_array=image,
                 output_nifti_path=output_path,
-                reference_nifti_path=self.current_roi,
+                reference_nifti_path=current_file,
             )

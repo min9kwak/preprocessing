@@ -63,7 +63,12 @@ def preprocess_exam_in_brats_style(args: argparse.Namespace, input_dir: str) -> 
         "fla_roi": input_dir.files("*fla_roi.nii.gz")
     }
 
-    # TODO: biopsy files
+    biopsy_files = {
+        "t1_biopsy": input_dir.files("*t1_biopsy.nii.gz"),
+        "t2_biopsy": input_dir.files("*t2_biopsy.nii.gz"),
+        "t1c_biopsy": input_dir.files("*t1c_biopsy.nii.gz"),
+        "fla_biopsy": input_dir.files("*fla_biopsy.nii.gz")
+    }
 
     # Select the center modality based on priority
     used_modalities = []
@@ -92,10 +97,16 @@ def preprocess_exam_in_brats_style(args: argparse.Namespace, input_dir: str) -> 
     else:
         roi_path = None
 
+    if len(biopsy_files[f'{center_modality}_biopsy']) == 1:
+        biopsy_path = biopsy_files[f'{center_modality}_biopsy'][0]
+    else:
+        biopsy_path = None
+
     center = ModifiedModalitiy(
         modality_name=center_modality,
         image_path=center_file,
         roi_path=roi_path,
+        biopsy_path=biopsy_path,
         raw_bet_output_path=(raw_bet_dir / f"{input_dir.name}_{center_modality}_bet.nii.gz") if args.return_raw else None,
         raw_bet_output_path_roi=(raw_bet_dir / f"{input_dir.name}_{center_modality}_roi_bet.nii.gz") if args.return_raw else None,
         normalized_bet_output_path=(norm_bet_dir / f"{input_dir.name}_{center_modality}_bet.nii.gz") if args.return_normalized else None,
@@ -111,17 +122,25 @@ def preprocess_exam_in_brats_style(args: argparse.Namespace, input_dir: str) -> 
 
             # mri
             image_path = files[0]
+
             # roi
             if len(roi_files[f'{modality_name}_roi']) == 1:
                 roi_path = roi_files[f'{modality_name}_roi'][0]
             else:
                 roi_path = None
 
+            # biopsy
+            if len(biopsy_files[f'{modality_name}_biopsy']) == 1:
+                biopsy_path = biopsy_files[f'{modality_name}_biopsy'][0]
+            else:
+                biopsy_path = None
+
             moving_modalities.append(
                 ModifiedModalitiy(
                     modality_name=modality_name,
                     image_path=image_path,
                     roi_path=roi_path,
+                    biopsy_path=biopsy_path,
                     raw_bet_output_path=(raw_bet_dir / f"{input_dir.name}_{modality_name}_bet.nii.gz") if args.return_raw else None,
                     raw_bet_output_path_roi=(raw_bet_dir / f"{input_dir.name}_{modality_name}_roi_bet.nii.gz") if args.return_raw else None,
                     normalized_bet_output_path=(norm_bet_dir / f"{input_dir.name}_{modality_name}_bet.nii.gz") if args.return_normalized else None,
@@ -168,4 +187,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)

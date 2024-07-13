@@ -4,7 +4,7 @@
 
 
 # Modified BrainLes-Preprocessing
-This repository is a modified version of the original [BrainLes preprocessing](https://github.com/BrainLesion/preprocessing) tool.
+This repository is a modified version of the original [BrainLes preprocessing](https://github.com/BrainLesion/preprocessing) tool (version 0.1.5).
 [BrainLes preprocessing](https://github.com/BrainLesion/preprocessing) is a comprehensive tool for preprocessing tasks in biomedical imaging, with a focus on (but not limited to) multi-modal brain MRI.
 BrainLes is written `backend-agnostic`, meaning it allows for swapping the registration and brain extraction tools.
 It can be used to build modular preprocessing pipelines.
@@ -38,7 +38,7 @@ pip install brainles_preprocessing[ants]
 ```
 ANTs utilizes the `t1_brats_space.nii` located in the `registration/atlas` directory of the `BrainLes preprocessing`.
 These files need to be moved to the main directory of your project.
-For example, they should be placed under `Project_Root/registration/atlas`.
+For example, `Project_Root/registration/atlas/t1_brats_space.nii`.
 
 ***Note: the current implementation only supports ANTs.
 
@@ -48,28 +48,27 @@ The modified implementations (`modality.py`, `ANTs.py`, and `preprocessor.py`) l
 
 
 ### 1. modality.py
-The `modality.py` file provides the `ModifiedModality` class, which can handle both MRI images and ROI 
-(Region of Interest; binary values of 0 and 1) masks. MRI images are either registered to a specific space 
-(for center modality) or transformed (for moving modality) during each preprocessing step.
-Correspondingly, the ROI undergoes an identical transformation as the MRI using `transform_roi`, 
-ensuring it is mapped to the same space.
+The `modality.py` file provides the `ModifiedModality` class, which can handle MRI images, ROI 
+(Region of Interest; binary values of 0 and 1) masks, and biopsy (binary pixels, not region) masks.
+MRI images are either registered to a specific space (for center modality) or transformed (for moving modality) during each preprocessing step.
+Correspondingly, the ROI and biopsy undergo an identical transformation as the MRI using `transform_binary`, ensuring it is mapped to the same space.
 
 
 ### 2. ANTs.py
 The `ANTs.py` file provides the `ModifiedANTsRegistrator` class, which extends the functionality of the 
 existing `ANTsRegistrator` to effectively handle ROI transformations. 
-When transforming the ROI, any values greater than **0.5** are converted to **1** to maintain the ROI as binary masks. 
+When transforming the ROI or biopsy, any values greater than **args.threshold** are converted to **1** to maintain the ROI or biopsy as a binary mask. 
 This step is crucial because, without it, the affine transformation process could result in blurred edges of the 
-final ROI. By ensuring values remain binary, the integrity of the ROI is preserved.
+final ROI or biopsy. By ensuring values remain binary, the integrity of the ROI or biopsy is preserved.
 
 
 ### 3. preprocessor.py
 The `modified_preprocessor.py` file provides the `ModifiedPreprocessor` class, which performs the complete 
-preprocessing steps. MRI images undergo *all five steps*, while ROI masks only go through *the first three steps*. 
+preprocessing steps. MRI images undergo *all five steps*, while ROI / biopsy masks only go through *the first three steps*. 
 The steps are as follows:
-1. **Co-registration**: This step adjusts the MRIs and ROIs to match a predefined center modality (orientation and central point).
-The center MRI is processed using the `register` function, while the center ROI, moving MRI, and moving ROI are 
-adjusted using the `transform` or `transform_roi` function to align with it.
+1. **Co-registration**: This step adjusts the MRIs and ROIs / biopsies to match a predefined center modality (orientation and central point).
+The center MRI is processed using the `register` function, while the center ROI / biopsy and moving MRI / ROI / biopsy are 
+adjusted using the `transform` or `transform_binary` function to align with it.
 2. **Atlas Registration**: This step adjusts the images to match the ANTs atlas.
 It ensures that the spacing, dimension, orientation, central point, and so on are consistent with the BraTS standard.
 3. **Atlas Correction (optional)**: This optional step further corrects any slight misalignments that remain after the atlas registration to ensure better accuracy.
@@ -81,8 +80,8 @@ It ensures that the spacing, dimension, orientation, central point, and so on ar
 This script performs preprocessing on all MRI and ROI files in the data folder and saves the results of each preprocessing step.
 Refer to the [Data Folder Structure](#data-folder-structure) section for the file organization format.
 
-The following modality images and ROIs are supported: t1 (T1), t2 (T2), t1c (T1Gd), fla (Flair).
-The center modality is determined based on the following priority: t1c, t2, t1, flair.
+The following modality images, ROIs, and biopsies are supported: t1 (T1), t2 (T2), t1c (T1Gd), fla (Flair).
+The center modality is determined based on the following priority: t1c, t2, t1, fla.
 The remaining modalities become moving modalities. Preprocessing is performed even if not all four modalities are present.
 All MRI images available for each patient undergo transformation.
 However, ROIs are only transformed if the corresponding MRI modality is present.
@@ -103,12 +102,16 @@ Project_Root/
     └── {patient_id}/        # Replace {patient_id} with the actual patient identifier
         ├── t1.nii.gz
         ├── t1_roi.nii.gz
+        ├── t1_biopsy.nii.gz
         ├── t1c.nii.gz
         ├── t1c_roi.nii.gz
+        ├── t1c_biopsy.nii.gz
         ├── t2.nii.gz
         ├── t2_roi.nii.gz
+        ├── t2_biopsy.nii.gz
         ├── fla.nii.gz
-        └── fla_roi.nii.gz
+        ├── fla_roi.nii.gz
+        └── fla_biopsy.nii.gz
 ```
 
 Note that the file extensions and names should follow the provided format.
