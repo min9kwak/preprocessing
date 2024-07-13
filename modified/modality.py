@@ -46,10 +46,11 @@ class ModifiedModalitiy:
         biopsy_path: Optional[str] = None,
         raw_bet_output_path: Optional[str] = None,
         raw_bet_output_path_roi: Optional[str] = None,
+        raw_bet_output_path_biopsy: Optional[str] = None,
         raw_skull_output_path: Optional[str] = None,
-        raw_skull_output_path_roi: Optional[str] = None,
         normalized_bet_output_path: Optional[str] = None,
         normalized_bet_output_path_roi: Optional[str] = None,
+        normalized_bet_output_path_biopsy: Optional[str] = None,
         normalized_skull_output_path: Optional[str] = None,
         normalized_skull_output_path_roi: Optional[str] = None,
         normalizer: Optional[Normalizer] = None,
@@ -87,16 +88,16 @@ class ModifiedModalitiy:
         if raw_bet_output_path is not None:
             self.raw_bet_output_path = turbopath(raw_bet_output_path)
             self.raw_bet_output_path_roi = turbopath(raw_bet_output_path_roi)
+            self.raw_bet_output_path_biopsy = turbopath(raw_bet_output_path_biopsy)
         else:
             self.raw_bet_output_path = raw_bet_output_path
             self.raw_bet_output_path_roi = raw_bet_output_path_roi
+            self.raw_bet_output_path_biopsy = raw_bet_output_path_biopsy
 
         if raw_skull_output_path is not None:
             self.raw_skull_output_path = turbopath(raw_skull_output_path)
-            self.raw_skull_output_path_roi = turbopath(raw_skull_output_path_roi)
         else:
             self.raw_skull_output_path = raw_skull_output_path
-            self.raw_skull_output_path_roi = raw_skull_output_path_roi
 
         if normalized_bet_output_path is not None:
             if normalizer is None:
@@ -105,9 +106,11 @@ class ModifiedModalitiy:
                 )
             self.normalized_bet_output_path = turbopath(normalized_bet_output_path)
             self.normalized_bet_output_path_roi = turbopath(normalized_bet_output_path_roi)
+            self.normalized_bet_output_path_biopsy = turbopath(normalized_bet_output_path_biopsy)
         else:
             self.normalized_bet_output_path = normalized_bet_output_path
             self.normalized_bet_output_path_roi = normalized_bet_output_path_roi
+            self.normalized_bet_output_path_biopsy = normalized_bet_output_path_biopsy
 
         if normalized_skull_output_path is not None:
             if normalizer is None:

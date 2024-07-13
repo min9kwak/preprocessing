@@ -143,8 +143,10 @@ def preprocess_exam_in_brats_style(args: argparse.Namespace, input_dir: str) -> 
                     biopsy_path=biopsy_path,
                     raw_bet_output_path=(raw_bet_dir / f"{input_dir.name}_{modality_name}_bet.nii.gz") if args.return_raw else None,
                     raw_bet_output_path_roi=(raw_bet_dir / f"{input_dir.name}_{modality_name}_roi_bet.nii.gz") if args.return_raw else None,
+                    raw_bet_output_path_biopsy=(raw_bet_dir / f"{input_dir.name}_{modality_name}_biopsy_bet.nii.gz") if args.return_raw else None,
                     normalized_bet_output_path=(norm_bet_dir / f"{input_dir.name}_{modality_name}_bet.nii.gz") if args.return_normalized else None,
                     normalized_bet_output_path_roi=(norm_bet_dir / f"{input_dir.name}_{modality_name}_roi_bet.nii.gz") if args.return_normalized else None,
+                    normalized_bet_output_path_biopsy=(norm_bet_dir / f"{input_dir.name}_{modality_name}_biopsy_bet.nii.gz") if args.return_normalized else None,
                     atlas_correction=True,
                     normalizer=percentile_normalizer,
                 )

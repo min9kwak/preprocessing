@@ -548,7 +548,9 @@ class ModifiedPreprocessor:
         # now we save images that are skullstripped
         logger.info("Saving skull-stripped images...")
         for modality in self.all_modalities:
+            # 1. raw
             if modality.raw_bet_output_path is not None:
+                # image
                 modality.save_current_image(
                     modality.raw_bet_output_path,
                     normalization=False,
@@ -559,7 +561,16 @@ class ModifiedPreprocessor:
                         modality.raw_bet_output_path_roi,
                         normalization=False,
                     )
+                # biopsy
+                if modality.biopsy_name is not None:
+                    modality.save_current_binary(
+                        modality.raw_bet_output_path_biopsy,
+                        normalization=False,
+                    )
+
+            # 2. normalized
             if modality.normalized_bet_output_path is not None:
+                # image
                 modality.save_current_image(
                     modality.normalized_bet_output_path,
                     normalization=True,
@@ -568,6 +579,12 @@ class ModifiedPreprocessor:
                 if modality.roi_name is not None:
                     modality.save_current_binary(
                         modality.normalized_bet_output_path_roi,
+                        normalization=True,
+                    )
+                # biopsy
+                if modality.biopsy_name is not None:
+                    modality.save_current_binary(
+                        modality.normalized_bet_output_path_biopsy,
                         normalization=True,
                     )
 
