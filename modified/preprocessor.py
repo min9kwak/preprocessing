@@ -560,12 +560,14 @@ class ModifiedPreprocessor:
                     modality.save_current_binary(
                         modality.raw_bet_output_path_roi,
                         normalization=False,
+                        binary_type='roi'
                     )
                 # biopsy
                 if modality.biopsy_name is not None:
                     modality.save_current_binary(
                         modality.raw_bet_output_path_biopsy,
                         normalization=False,
+                        binary_type='biopsy'
                     )
 
             # 2. normalized
@@ -580,12 +582,14 @@ class ModifiedPreprocessor:
                     modality.save_current_binary(
                         modality.normalized_bet_output_path_roi,
                         normalization=True,
+                        binary_type='roi'
                     )
                 # biopsy
                 if modality.biopsy_name is not None:
                     modality.save_current_binary(
                         modality.normalized_bet_output_path_biopsy,
                         normalization=True,
+                        binary_type='biopsy'
                     )
 
         logger.info(f"{' Preprocessing complete ':=^80}")
