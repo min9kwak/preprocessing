@@ -148,6 +148,10 @@ To compress only the final results, use the following command:
 find . -type d -name normalized_bet -exec zip -r normalized_bet_archives.zip {} +
 ```
 
+The example of preprocessing result is as follows (t1c):
+
+<img src="assets/overview.png" alt="Overview Image" width="800"/>
+
 
 ### Atlas Reference
 We provide the SRI-24 atlas from this [publication](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2915788/).
